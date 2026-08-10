@@ -68,3 +68,9 @@ After starting the SampleNetworkServer, you should have a SimpleClient instance 
 As well as be able to reach the server through one of the open UDP ports:
 
 ![server_verify.png](./images/server_verify.png)
+
+To generate an access token, send a request with "AUTH \<password\>"
+
+To run an authenticated request, send a request with "\<token\>;\<command\>"
+
+![usage_sammple.png](./images/usage_sample.png)
