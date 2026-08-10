@@ -59,3 +59,11 @@ Set the password env var and run the sample network server. This will create a m
 $ export AUTH_PASSWORD="your-password"
 $ python3 src/SampleNetworkServer.py
 ```
+
+After starting the SampleNetworkServer, you should have a SimpleClient instance open up and begin updating temperatures:
+
+![client_verify.png](./images/client_verify.png)
+
+As well as be able to reach the server through one of the open UDP ports:
+
+![server_verify.png](./images/server_verify.png)
