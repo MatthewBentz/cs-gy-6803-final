@@ -35,7 +35,6 @@ class SimpleClient :
             plt.xticks(range(30), self.times,rotation = 45)
             plt.title(time.strftime("%A, %Y-%m-%d", time.localtime(now)))
 
-
     def updateInfTemp(self, frame) :
         self.updateTime()
         self.infTemps.append(self.infTherm.getTemperature()-273)

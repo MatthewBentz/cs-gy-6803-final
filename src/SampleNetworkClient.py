@@ -3,6 +3,13 @@ import matplotlib.animation as animation
 import time
 import math
 import socket
+import os
+
+AUTH_PASSWORD = os.environ.get("AUTH_PASSWORD", "").encode("utf-8")
+if not AUTH_PASSWORD:
+    print("ERROR: AUTH_PASSWORD environment variable must be set before execution.")
+    print("Usage: AUTH_PASSWORD=<your_password> python SampleNetworkClient.py")
+    exit(1)
 
 class SimpleNetworkClient :
     def __init__(self, port1, port2) :
@@ -39,6 +46,7 @@ class SimpleNetworkClient :
 
     def getTemperatureFromPort(self, p, tok) :
         s = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        s.settimeout(5)
         s.sendto(b"%s;GET_TEMP" % tok, ("127.0.0.1", p))
         msg, addr = s.recvfrom(1024)
         m = msg.decode("utf-8")
@@ -46,6 +54,7 @@ class SimpleNetworkClient :
 
     def authenticate(self, p, pw) :
         s = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        s.settimeout(5)
         s.sendto(b"AUTH %s" % pw, ("127.0.0.1", p))
         msg, addr = s.recvfrom(1024)
         return msg.strip()
@@ -53,10 +62,9 @@ class SimpleNetworkClient :
     def updateInfTemp(self, frame) :
         self.updateTime()
         if self.infToken is None : #not yet authenticated
-            self.infToken = self.authenticate(self.infPort, b"!Q#E%T&U8i6y4r2w")
+            self.infToken = self.authenticate(self.infPort, AUTH_PASSWORD)
 
         self.infTemps.append(self.getTemperatureFromPort(self.infPort, self.infToken)-273)
-        #self.infTemps.append(self.infTemps[-1] + 1)
         self.infTemps = self.infTemps[-30:]
         self.infLn.set_data(range(30), self.infTemps)
         return self.infLn,
@@ -64,10 +72,9 @@ class SimpleNetworkClient :
     def updateIncTemp(self, frame) :
         self.updateTime()
         if self.incToken is None : #not yet authenticated
-            self.incToken = self.authenticate(self.incPort, b"!Q#E%T&U8i6y4r2w")
+            self.incToken = self.authenticate(self.incPort, AUTH_PASSWORD)
 
         self.incTemps.append(self.getTemperatureFromPort(self.incPort, self.incToken)-273)
-        #self.incTemps.append(self.incTemps[-1] + 1)
         self.incTemps = self.incTemps[-30:]
         self.incLn.set_data(range(30), self.incTemps)
         return self.incLn,

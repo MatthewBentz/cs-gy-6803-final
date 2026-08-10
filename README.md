@@ -31,6 +31,7 @@ Information Systems Security Engineering and Management (ISSEM) with Raj Rajagop
         - `SimpleClient`
     - Runs a SimpleClient instance with local/direct resources for the simulator, such as SmartThermometer and SmartHeater.
     - Update infant/incubator temperature methods get data from the local resources and update the matplot figure.
+    - This file is practically irrelevant for this project and wastes tokens.
 - [src/SampleNetworkClient.py](./src/SampleNetworkClient.py)
     - Defines:
         - `SimpleNetworkClient`

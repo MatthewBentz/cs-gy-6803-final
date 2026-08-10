@@ -11,6 +11,15 @@ import errno
 import random
 import string
 
+AUTH_PASSWORD = os.environ.get("AUTH_PASSWORD", "")
+if not AUTH_PASSWORD:
+    print("ERROR: AUTH_PASSWORD environment variable must be set before execution.")
+    print("Usage: AUTH_PASSWORD=<your_password> python SampleNetworkServer.py")
+    exit(1)
+
+MAX_SESSIONS = 32
+TOKEN_TIMEOUT = 86400  # 24 hours in seconds
+
 class SmartNetworkThermometer (threading.Thread) :
     open_cmds = ["AUTH", "LOGOUT"]
     prot_cmds = ["SET_DEGF", "SET_DEGC", "SET_DEGK", "GET_TEMP", "UPDATE_TEMP"]
@@ -22,7 +31,7 @@ class SmartNetworkThermometer (threading.Thread) :
         self.updatePeriod = updatePeriod
         self.curTemperature = 0
         self.updateTemperature()
-        self.tokens = []
+        self.tokens = {}  # {token: timestamp}
 
         self.serverSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
         self.serverSocket.bind(("127.0.0.1", port))
@@ -53,18 +62,29 @@ class SmartNetworkThermometer (threading.Thread) :
         return self.curTemperature
 
     def processCommands(self, msg, addr) :
+        # Clean up expired tokens
+        now = time.time()
+        expired = [t for t, ts in self.tokens.items() if now - ts > TOKEN_TIMEOUT]
+        for t in expired:
+            del self.tokens[t]
+
         cmds = msg.split(';')
         for c in cmds :
             cs = c.split(' ')
             if len(cs) == 2 : #should be either AUTH or LOGOUT
                 if cs[0] == "AUTH":
-                    if cs[1] == "!Q#E%T&U8i6y4r2w" :
-                        self.tokens.append(''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(16)))
-                        self.serverSocket.sendto(self.tokens[-1].encode("utf-8"), addr)
-                        #print (self.tokens[-1])
+                    if cs[1] == AUTH_PASSWORD.encode("utf-8") :
+                        if len(self.tokens) >= MAX_SESSIONS:
+                            self.serverSocket.sendto(b"maximum active sessions reached\n", addr)
+                            return
+                        token = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(16))
+                        self.tokens[token] = now
+                        self.serverSocket.sendto(token.encode("utf-8"), addr)
+                        #print (token)
                 elif cs[0] == "LOGOUT":
                     if cs[1] in self.tokens :
-                        self.tokens.remove(cs[1])
+                        del self.tokens[cs[1]]
+                        return # ends processing of commands after a session is invalidated
                 else : #unknown command
                     self.serverSocket.sendto(b"Invalid Command\n", addr)
             elif c == "SET_DEGF" :
@@ -79,7 +99,6 @@ class SmartNetworkThermometer (threading.Thread) :
                 self.updateTemperature()
             elif c :
                 self.serverSocket.sendto(b"Invalid Command\n", addr)
-
 
     def run(self) : #the running function
         while True : 
@@ -115,11 +134,8 @@ class SmartNetworkThermometer (threading.Thread) :
                     pass
                 msg = ""
 
- 
-
             self.updateTemperature()
             time.sleep(self.updatePeriod)
-
 
 class SimpleClient :
     def __init__(self, therm1, therm2) :
@@ -151,11 +167,9 @@ class SimpleClient :
             plt.xticks(range(30), self.times,rotation = 45)
             plt.title(time.strftime("%A, %Y-%m-%d", time.localtime(now)))
 
-
     def updateInfTemp(self, frame) :
         self.updateTime()
         self.infTemps.append(self.infTherm.getTemperature()-273)
-        #self.infTemps.append(self.infTemps[-1] + 1)
         self.infTemps = self.infTemps[-30:]
         self.infLn.set_data(range(30), self.infTemps)
         return self.infLn,
@@ -163,7 +177,6 @@ class SimpleClient :
     def updateIncTemp(self, frame) :
         self.updateTime()
         self.incTemps.append(self.incTherm.getTemperature()-273)
-        #self.incTemps.append(self.incTemps[-1] + 1)
         self.incTemps = self.incTemps[-30:]
         self.incLn.set_data(range(30), self.incTemps)
         return self.incLn,
@@ -173,12 +186,10 @@ SIMULATION_STEP = .1 #in seconds
 
 #create a new instance of IncubatorSimulator
 bob = infinc.Human(mass = 8, length = 1.68, temperature = 36 + 273)
-#bobThermo = infinc.SmartThermometer(bob, UPDATE_PERIOD)
 bobThermo = SmartNetworkThermometer(bob, UPDATE_PERIOD, 23456)
 bobThermo.start() #start the thread
 
 inc = infinc.Incubator(width = 1, depth=1, height = 1, temperature = 37 + 273, roomTemperature = 20 + 273)
-#incThermo = infinc.SmartNetworkThermometer(inc, UPDATE_PERIOD)
 incThermo = SmartNetworkThermometer(inc, UPDATE_PERIOD, 23457)
 incThermo.start() #start the thread
 
