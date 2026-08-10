@@ -73,14 +73,13 @@ class SmartNetworkThermometer (threading.Thread) :
             cs = c.split(' ')
             if len(cs) == 2 : #should be either AUTH or LOGOUT
                 if cs[0] == "AUTH":
-                    if cs[1] == AUTH_PASSWORD.encode("utf-8") :
+                    if cs[1] == AUTH_PASSWORD :
                         if len(self.tokens) >= MAX_SESSIONS:
                             self.serverSocket.sendto(b"maximum active sessions reached\n", addr)
                             return
                         token = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(16))
                         self.tokens[token] = now
                         self.serverSocket.sendto(token.encode("utf-8"), addr)
-                        #print (token)
                 elif cs[0] == "LOGOUT":
                     if cs[1] in self.tokens :
                         del self.tokens[cs[1]]
@@ -101,6 +100,7 @@ class SmartNetworkThermometer (threading.Thread) :
                 self.serverSocket.sendto(b"Invalid Command\n", addr)
 
     def run(self) : #the running function
+        print("SmartNetworkThermometer running on port %d" % self.serverSocket.getsockname()[1])
         while True : 
             try :
                 msg, addr = self.serverSocket.recvfrom(1024)
@@ -153,8 +153,8 @@ class SimpleClient :
         self.infTherm = therm1
         self.incTherm = therm2
 
-        self.ani = animation.FuncAnimation(self.fig, self.updateInfTemp, interval=500)
-        self.ani2 = animation.FuncAnimation(self.fig, self.updateIncTemp, interval=500)
+        self.ani = animation.FuncAnimation(self.fig, self.updateInfTemp, interval=500, cache_frame_data=False)
+        self.ani2 = animation.FuncAnimation(self.fig, self.updateIncTemp, interval=500, cache_frame_data=False)
 
     def updateTime(self) :
         now = time.time()
