@@ -4,6 +4,10 @@ Information Systems Security Engineering and Management (ISSEM) with Raj Rajagop
 
 - [Matthew Bentz](mailto:mb9661@nyu.edu)
 
+## Final Submission
+
+- [ISSEM Final Project.pdf](ISSEM%20Final%20Project.pdf)
+
 ## Project Spec
 
 - [ISSEM Final Project summer 2026.pdf](ISSEM%20Final%20Project%20summer%202026.pdf)
@@ -42,7 +46,7 @@ Information Systems Security Engineering and Management (ISSEM) with Raj Rajagop
         - `SmartNetworkThermometer`
         - `SimpleClient` (redundant)
     - Runs two SmartNetworkThermometer daemon processes on ports 23456 (infant thermometer) and 23457 (incubator thermometer). 
-    - Along with the simulator, and instance off SimpleClient is created, duplicated from SampleClient.py.
+    - Along with the simulator, and instance of SimpleClient is created, duplicated from SampleClient.py.
 
 ## Usage
 
